@@ -1,0 +1,8 @@
+{
+  "name": "birthdae-agent-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": { "start": "node src/index.js", "test": "node --test" },
+  "dependencies": { "@cloudbase/node-sdk": "^3.16.0" }
+}
