@@ -16,6 +16,7 @@ async function executeContactTool(database, actor, tool, args = {}) {
     if (!name) throw new Error("CONTACT_NAME_REQUIRED");
     const result = await contacts.where({ openid: actor.openid, name: database.RegExp({ regexp: name, options: "i" }) }).limit(10).get();
     const rows = result.data || [];
+    console.info(JSON.stringify({ event: "contact.search", actor: String(actor.openid).slice(-8), name, matches: rows.length }));
     return { tool, status: rows.length === 1 ? "ok" : rows.length ? "ambiguous" : "not_found", contacts: rows.map((row) => {
       const contact = contactDetail(row);
       return { ref: contact.ref, name: contact.name, relation: contact.relation, birthdayMonth: contact.birthdayMonth, birthdayDay: contact.birthdayDay };
