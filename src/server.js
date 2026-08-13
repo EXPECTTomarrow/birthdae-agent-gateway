@@ -6,15 +6,16 @@ function createServer({ execute }) {
     let raw = "";
     request.on("data", (chunk) => { raw += chunk; if (raw.length > 16384) request.destroy(); });
     request.on("end", async () => {
+      let payload = {};
       try {
-        const payload = JSON.parse(raw || "{}");
+        payload = JSON.parse(raw || "{}");
         if (!payload.actorToken) throw new Error("AGENT_TOKEN_INVALID");
         const data = await execute(payload);
         console.info(JSON.stringify({ event: "tool.response", requestId: payload.requestId || "", tool: payload.tool, status: data.status, count: Array.isArray(data.contacts) ? data.contacts.length : undefined }));
         reply(response, 200, { success: true, data });
       } catch (error) {
         const code = error.message || "AGENT_TOOL_ERROR";
-        console.error(JSON.stringify({ event: "tool.error", requestId: "", code }));
+        console.error(JSON.stringify({ event: "tool.error", requestId: payload.requestId || "", tool: payload.tool || "", code }));
         reply(response, /^AGENT_TOKEN_/.test(code) ? 401 : 400, { success: false, code });
       }
     });
