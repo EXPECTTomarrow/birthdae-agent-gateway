@@ -8,14 +8,21 @@ function contactDetail(row) {
   };
 }
 
+function normalizeName(value) {
+  return String(value || "").trim().toLocaleLowerCase();
+}
+
 async function executeContactTool(database, actor, tool, args = {}) {
   if (actor.scope !== "personal") throw new Error("AGENT_SCOPE_NOT_SUPPORTED");
   const contacts = database.collection("contacts");
   if (tool === "contact.search") {
     const name = typeof args.name === "string" ? args.name.trim().slice(0, 50) : "";
     if (!name) throw new Error("CONTACT_NAME_REQUIRED");
-    const result = await contacts.where({ openid: actor.openid, name: database.RegExp({ regexp: name, options: "i" }) }).limit(10).get();
-    const rows = result.data || [];
+    const result = await contacts.where({ openid: actor.openid }).limit(500).get();
+    const query = normalizeName(name);
+    const matchingRows = (result.data || []).filter((row) => normalizeName(row.name).includes(query));
+    const exactRows = matchingRows.filter((row) => normalizeName(row.name) === query);
+    const rows = exactRows.length ? exactRows : matchingRows;
     console.info(JSON.stringify({ event: "contact.search", actor: String(actor.openid).slice(-8), name, matches: rows.length }));
     return { tool, status: rows.length === 1 ? "ok" : rows.length ? "ambiguous" : "not_found", contacts: rows.map((row) => {
       const contact = contactDetail(row);
